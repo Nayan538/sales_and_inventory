@@ -18,6 +18,11 @@
    $tableName = "customers";
    $customerList = $eloquent->selectData($columnName, $tableName);
    
+   
+   
+   /*echo '<pre>';
+   print_r($updateResult);
+   echo '</pre>';*/
    # SAVE ORDER #
    if(isset($_POST['create_order']))
    {
@@ -26,27 +31,29 @@
    	$whereValue["id"] = $_POST['product_id'];
    	$productPrice = $eloquent->selectData($columnName, $tableName,$whereValue);
    
-   	$tableName = "orders";
-   	$columnValue["order_date"] = $_POST['order_date'];
-   	$columnValue["customer_id"] = $_POST['customer_name'];
-   	$columnValue["category_id"] = $_POST['category_id'];
-   	$columnValue["subcategory_id"] = $_POST['subcategory_id'];
-   	$columnValue["product_id"] = $_POST['product_id'];
-   	$columnValue["product_price"] = $productPrice[0]['product_price'];
-   	$columnValue["order_quantity"] = $_POST['order_quantity'];
-   	$columnValue["grand_total"] = $productPrice[0]['product_price'] * $_POST['order_quantity'];
-   	$saveCustomer = $eloquent->insertData($tableName, $columnValue);
-   }
-   if(isset($_POST['create_order']))
-   {
-   	$tableName = "products";
-   	$columnValue["product_quantity"] = $_GET["product_quantity"] - $_POST['order_quantity'];
-   	$whereValue["id"] = $_POST['product_id'];
-   	$updateResult = $eloquent->updateData($tableName, $columnValue,@$whereValue);
-   
-   	echo '<pre>';
-   	print_r($updateResult);
-   	echo '</pre>';
+   	if($productPrice[0]['product_quantity'] > $_POST['order_quantity'] ){
+   		$tableName = $columnValue = $whereValue =  null;
+   		$tableName = "products";
+   		$columnValue["product_quantity"] = ($productPrice[0]['product_quantity'] - $_POST['order_quantity']);
+   		$whereValue["id"] = $_POST['product_id'];
+   		$updateResult = $eloquent->updateData($tableName, $columnValue,$whereValue);
+   		
+   		$tableName = $columnValue = $whereValue =  null;
+   		$tableName = "orders";
+   		$columnValue["order_date"] = $_POST['order_date'];
+   		$columnValue["customer_id"] = $_POST['customer_name'];
+   		$columnValue["category_id"] = $_POST['category_id'];
+   		$columnValue["subcategory_id"] = $_POST['subcategory_id'];
+   		$columnValue["product_id"] = $_POST['product_id'];
+   		$columnValue["product_price"] = $productPrice[0]['product_price'];
+   		$columnValue["order_quantity"] = $_POST['order_quantity'];
+   		$columnValue["grand_total"] = $productPrice[0]['product_price'] * $_POST['order_quantity'];
+   		$saveCustomer = $eloquent->insertData($tableName, $columnValue);
+   	}
+   	else{
+   		echo "<div class='alert alert-danger'>Product not Available! Please recheck Product Quantity.</div>";
+   	}
+   	
    }
    ?>
 <!--body wrapper start-->
@@ -67,7 +74,7 @@
             <div class="panel-body">
                <?php 
                   # INSERT MESSAGE
-                  if(isset($_POST['create_order'])) 
+                  if(isset($_POST['create_order']))
                   {
                   	if($saveCustomer > 0)
                   		echo "<div class='alert alert-success'>New Order is created successfully!</div>";
@@ -144,12 +151,15 @@
                   </div>
                   <div class="form-group">
                      <label for="OrdersQuantity" class="col-lg-2 col-sm-2 control-label">Orders Quantity</label>
-                     <div class="col-lg-4">
-                        <input type="number" name="order_quantity" class="form-control" id="order_quantity" >
+                     <div class="col-lg-3">
+                        <input type="text" name="order_quantity" class="form-control" id="order_quantity" autocomplete="off" onkeyup="generate_total(this.value)" >
+                     </div>
+                     <div class="col-lg-2">
+                        <button name="grand_total" class="btn btn-success" type="submit">Total</button>	
                      </div>
                      <label for="grand_total" class="col-lg-2 col-sm-2 control-label">Orders Price</label>
-                     <div class="col-lg-4">
-                        <input type="number" step="any" name="grand_total" class="form-control" id="grand_total">
+                     <div class="col-lg-3">
+                        <input type="text"  name="grand_total" class="form-control" id="grand_total" >
                      </div>
                   </div>
                   <div class="form-group">
@@ -177,21 +187,11 @@
 <!--body wrapper end-->
 <script src="public/js/jquery-1.10.2.min.js"></script>
 <script>
-   $(document).ready(function(){
-   
-   var product_price = <?php echo $productPrice[0]['product_price']; ?>;
-   
-     	$("product_price, #order_quantity").keyup(function(){
-   
-     	var grand_total=0;    	
-     	var x = Number($("#product_price").val(product_price));
-     	var y = Number($("#order_quantity").val());
-     	var grand_total=x * y;  
-   
-     	$('#grand_total').val(grand_total);
-   
-     });
-   });
+   function generate_total(order_quantity)
+   {
+   	document.getElementById("grand_total").value=val(document.getElementById("product_id").value)*eval(document.getElementById("order_quantity").value);
+       aleart("grand_total");
+   }
 </script>
 <!-- ---------- AJAX CODE TO LOAD SUBCATEGORY AGAINST CATEGORY ---------- -->
 <script src="public/js/jquery-1.10.2.min.js"></script>
